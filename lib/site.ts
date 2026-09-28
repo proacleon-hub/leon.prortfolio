@@ -31,3 +31,8 @@ export const KNOWN_ROUTES = [
 export const IMAGE_WIDTHS = [640, 828, 1080, 1200, 1920, 2048];
 // High enough that photos look the same as the originals.
 export const IMAGE_QUALITY = 85;
+
+// Phones are sent to this hidden path prefix (see next.config.ts), so they can
+// get their own lighter version of each page, cached separately from the
+// desktop version. Visitors never see it in the address bar.
+export const PHONE_PREFIX = "jl-phone";

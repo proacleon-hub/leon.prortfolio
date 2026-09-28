@@ -1,3 +1,4 @@
+import { PHONE_PREFIX } from "@/lib/site";
 import { getNotFoundPage, getPage, snapshotRoutes } from "@/lib/wp";
 
 // Pages are built once and refreshed from WordPress every 5 minutes (ISR),
@@ -16,7 +17,8 @@ function routeOf(slug?: string[]): string {
 
 export async function generateStaticParams() {
   const routes = await snapshotRoutes();
-  return routes.map((r) => ({ slug: r === "/" ? [] : r.replace(/^\/|\/$/g, "").split("/") }));
+  const desktop = routes.map((r) => (r === "/" ? [] : r.replace(/^\/|\/$/g, "").split("/")));
+  return [...desktop, ...desktop.map((s) => [PHONE_PREFIX, ...s])].map((slug) => ({ slug }));
 }
 
 const HTML = "text/html; charset=utf-8";
@@ -27,8 +29,11 @@ const HTML = "text/html; charset=utf-8";
  * interactive parts, which keeps pages as light as the WordPress originals.
  */
 export async function GET(_req: Request, { params }: Ctx) {
-  const route = routeOf((await params).slug);
-  const res = await getPage(route);
+  let slug = (await params).slug;
+  const phone = slug?.[0] === PHONE_PREFIX;
+  if (phone) slug = slug!.slice(1);
+  const route = routeOf(slug);
+  const res = await getPage(route, phone);
   switch (res.kind) {
     case "page":
       return new Response(res.html, { headers: { "content-type": HTML, "x-jl-source": res.source } });
@@ -37,7 +42,7 @@ export async function GET(_req: Request, { params }: Ctx) {
     case "redirect":
       return new Response(null, { status: res.status, headers: { location: res.location } });
     default: {
-      const notFound = await getNotFoundPage();
+      const notFound = await getNotFoundPage(phone);
       return new Response(notFound ?? "Page not found", { status: res.status, headers: { "content-type": HTML } });
     }
   }

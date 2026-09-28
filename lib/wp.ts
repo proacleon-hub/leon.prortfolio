@@ -1,7 +1,18 @@
 import { readFile, readdir } from "node:fs/promises";
 import path from "node:path";
 import { GA_IDS, REVALIDATE, WP_ORIGIN } from "./site";
+import { inlineStylesheets } from "./inline-css";
 import { toDocument, toPublicUrls } from "./transform";
+
+/**
+ * The finished page: WordPress markup cleaned up. Phones get the stylesheets
+ * built into the page (see lib/inline-css.ts); computers get the page exactly
+ * as before.
+ */
+async function render(html: string, phone: boolean): Promise<string> {
+  const doc = toDocument(html, { gaIds: GA_IDS });
+  return phone ? inlineStylesheets(doc) : doc;
+}
 
 const SNAPSHOT_DIR = path.join(process.cwd(), "snapshot");
 
@@ -67,7 +78,7 @@ function isHtml(contentType: string) {
  * serves. WordPress is the source of truth; the saved snapshot keeps the site
  * up if WordPress can't be reached.
  */
-export async function getPage(route: string): Promise<PageResult> {
+export async function getPage(route: string, phone = false): Promise<PageResult> {
   const live = await fetchFromWordPress(route);
   if (live) {
     if (live.status >= 300 && live.status < 400) {
@@ -84,20 +95,20 @@ export async function getPage(route: string): Promise<PageResult> {
     } else if (!isHtml(live.contentType)) {
       return { kind: "file", body: toPublicUrls(live.body), contentType: live.contentType };
     } else {
-      return { kind: "page", html: toDocument(live.body, { gaIds: GA_IDS }), source: "wordpress" };
+      return { kind: "page", html: await render(live.body, phone), source: "wordpress" };
     }
   }
   const saved = await readSnapshot(route);
-  if (saved) return { kind: "page", html: toDocument(saved, { gaIds: GA_IDS }), source: "snapshot" };
+  if (saved) return { kind: "page", html: await render(saved, phone), source: "snapshot" };
   return { kind: "not-found", status: 404 };
 }
 
 /** The site's own 404 page design. */
-export async function getNotFoundPage(): Promise<string | null> {
+export async function getNotFoundPage(phone = false): Promise<string | null> {
   const live = await fetchFromWordPress("/__jl-not-found__/");
-  if (live && live.status === 404 && isHtml(live.contentType)) return toDocument(live.body, { gaIds: GA_IDS });
+  if (live && live.status === 404 && isHtml(live.contentType)) return render(live.body, phone);
   const saved = await readSnapshot("/__404/");
-  return saved ? toDocument(saved, { gaIds: GA_IDS }) : null;
+  return saved ? render(saved, phone) : null;
 }
 
 /** When WordPress last changed (set by the bridge plugin on every save). */

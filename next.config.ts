@@ -2,6 +2,9 @@ import type { NextConfig } from "next";
 
 const WP_ORIGIN = (process.env.WP_ORIGIN || "https://cms.junayedleon.tech").replace(/\/$/, "");
 
+// Phone browsers ("Mobile" is in every phone user agent; tablets leave it out).
+const PHONE_UA = { type: "header" as const, key: "user-agent", value: ".*Mobile.*" };
+
 const config: NextConfig = {
   // WordPress URLs end with a slash (/services/, /insights/post-name/).
   trailingSlash: true,
@@ -38,7 +41,12 @@ const config: NextConfig = {
         { source: "/wp-includes/:path*", destination: `${WP_ORIGIN}/wp-includes/:path*` },
         { source: "/wp-json/:path*", destination: `${WP_ORIGIN}/wp-json/:path*` },
       ],
-      afterFiles: [],
+      // Phones get their own lighter version of each page (style files built
+      // in, see lib/inline-css.ts). Computers and tablets are not affected.
+      afterFiles: [
+        { source: "/", has: [PHONE_UA], destination: "/jl-phone/" },
+        { source: "/:path((?!_next/|api/|jl-phone/|wp-|.*\\.[a-zA-Z0-9]+$).*)", has: [PHONE_UA], destination: "/jl-phone/:path" },
+      ],
       fallback: [],
     };
   },
