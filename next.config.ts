@@ -1,6 +1,6 @@
 import type { NextConfig } from "next";
 
-const WP_ORIGIN = (process.env.WP_ORIGIN || "https://junayedleon.tech").replace(/\/$/, "");
+const WP_ORIGIN = (process.env.WP_ORIGIN || "https://cms.junayedleon.tech").replace(/\/$/, "");
 
 const config: NextConfig = {
   // WordPress URLs end with a slash (/services/, /insights/post-name/).

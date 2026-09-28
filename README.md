@@ -33,7 +33,7 @@ fonts, colours and animations match the WordPress site exactly.
 | Variable     | Default                     | Meaning                                  |
 |--------------|-----------------------------|------------------------------------------|
 | `SITE_URL`   | `https://junayedleon.tech`  | Public address used in canonical/OG tags |
-| `WP_ORIGIN`  | `https://junayedleon.tech`  | Where WordPress is reachable             |
+| `WP_ORIGIN`  | `https://cms.junayedleon.tech` | Where WordPress is reachable             |
 | `WP_SOURCE`  | (unset)                     | `snapshot` = never call WordPress        |
 
 ## Run locally
@@ -46,25 +46,29 @@ WP_SOURCE=snapshot npm run build   # offline build from the saved copy
 
 ## Launch checklist (in order)
 
-1. Import this repo into Vercel (framework: Next.js, no extra settings).
-   Check the `*.vercel.app` preview against the live site.
-2. Create the DNS record `cms.junayedleon.tech` pointing at the current
-   WordPress server, and get HTTPS working on it.
-3. In WordPress, change Settings → General (WordPress Address and Site
-   Address) to `https://cms.junayedleon.tech`, and set the Vercel variable
-   `WP_ORIGIN=https://cms.junayedleon.tech`. Redeploy.
-4. Point `junayedleon.tech` and `www` at Vercel (Vercel shows the exact records).
-5. Add a Yoast/robots rule so `cms.junayedleon.tech` itself is not indexed.
-6. Re-submit `https://junayedleon.tech/sitemap_index.xml` in Search Console.
-
-Steps 2–5 change the live site and need the owner's go-ahead.
+1. ✅ Import this repo into Vercel and check the `*.vercel.app` preview.
+2. ✅ DNS record `cms` → 72.62.7.44 at Hostinger, and `cms.junayedleon.tech`
+   added to the WordPress Traefik router (HTTPS by Let's Encrypt). Done 2026-09-28.
+3. ✅ Install `wordpress/jl-nextjs-bridge.php` as a must-use plugin. On the cms
+   address it makes WordPress use that address and sends `noindex`. WordPress's
+   own settings stay `https://junayedleon.tech`, so nothing else changes.
+4. ✅ Next.js reads WordPress from `https://cms.junayedleon.tech` (default of `WP_ORIGIN`).
+5. Add `junayedleon.tech` and `www.junayedleon.tech` in Vercel → Domains.
+6. With the owner's written go-ahead, change the Hostinger DNS records `@` and
+   `www` to the values Vercel shows. Keep the `cms` record.
+7. Re-submit `https://junayedleon.tech/sitemap_index.xml` in Search Console.
 
 ## Going back to the old site
 
-WordPress is never removed, so the old site can come back at any time:
+WordPress is never removed and keeps `https://junayedleon.tech` as its address,
+so going back is only a DNS change. At Hostinger (nameservers
+`athena/apollo.dns-parking.com`), set these records back to their values from
+before launch:
 
-1. Put the domain's DNS records back to the values saved before launch.
-2. Set WordPress Settings → General back to `https://junayedleon.tech`.
+| Type | Name  | Points to    | TTL |
+| ---- | ----- | ------------ | --- |
+| A    | `@`   | `72.62.7.44` | 300 |
+| A    | `www` | `72.62.7.44` | 300 |
 
 A full WordPress backup (database, uploads, custom code) was taken on
 2026-09-28 before any launch step.

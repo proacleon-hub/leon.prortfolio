@@ -1,9 +1,9 @@
 // Public address of the site (what visitors and Google see).
 export const SITE_URL = (process.env.SITE_URL || "https://junayedleon.tech").replace(/\/$/, "");
 
-// Where WordPress lives. Today that is the live site itself; after the DNS
-// switch it becomes the CMS subdomain (e.g. https://cms.junayedleon.tech).
-export const WP_ORIGIN = (process.env.WP_ORIGIN || "https://junayedleon.tech").replace(/\/$/, "");
+// Where WordPress lives: the CMS subdomain, so the public domain can point
+// at Next.js. Set WP_ORIGIN=https://junayedleon.tech to read the old address.
+export const WP_ORIGIN = (process.env.WP_ORIGIN || "https://cms.junayedleon.tech").replace(/\/$/, "");
 
 // Every host WordPress may print in its HTML. All of them are mapped to SITE_URL.
 export const WP_HOSTS = Array.from(
