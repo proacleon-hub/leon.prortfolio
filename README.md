@@ -7,9 +7,10 @@ fonts, colours and animations match the WordPress site exactly.
 
 ## How it works
 
-- `app/[[...slug]]/page.tsx` renders every route (`/`, `/services/`,
-  `/insights/<post>/`, …). It asks WordPress for the page (`lib/wp.ts`),
-  turns it into page data (`lib/transform.ts`) and draws it (`app/wp-page.tsx`).
+- `app/[[...slug]]/route.ts` serves every route (`/`, `/services/`,
+  `/insights/<post>/`, …). It asks WordPress for the page (`lib/wp.ts`) and
+  cleans it into the final HTML document (`lib/transform.ts`). No React
+  runtime is shipped, so pages are lighter than the WordPress originals.
 - Pages are static and refresh from WordPress every 5 minutes (ISR), so new
   posts and edits show up without a redeploy.
 - `snapshot/` holds a saved copy of every page. If WordPress can't be reached,

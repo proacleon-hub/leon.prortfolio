@@ -1,8 +1,7 @@
 import { readFile, readdir } from "node:fs/promises";
 import path from "node:path";
-import { cache } from "react";
-import { REVALIDATE, WP_ORIGIN } from "./site";
-import { transform, type PageData } from "./transform";
+import { GA_IDS, REVALIDATE, WP_ORIGIN } from "./site";
+import { toDocument } from "./transform";
 
 const SNAPSHOT_DIR = path.join(process.cwd(), "snapshot");
 
@@ -49,7 +48,7 @@ async function fetchFromWordPress(route: string): Promise<{ status: number; html
 }
 
 export type PageResult =
-  | { kind: "page"; data: PageData; source: "wordpress" | "snapshot" }
+  | { kind: "page"; html: string; source: "wordpress" | "snapshot" }
   | { kind: "redirect"; location: string }
   | { kind: "not-found" };
 
@@ -58,7 +57,7 @@ export type PageResult =
  * draw. WordPress is the source of truth; the saved snapshot keeps the site
  * up if WordPress can't be reached.
  */
-export const getPage = cache(async (route: string): Promise<PageResult> => {
+export async function getPage(route: string): Promise<PageResult> {
   const live = await fetchFromWordPress(route);
   if (live) {
     if (live.status === 404) return { kind: "not-found" };
@@ -71,18 +70,18 @@ export const getPage = cache(async (route: string): Promise<PageResult> => {
       // A redirect back to the same address would loop; use the saved copy instead.
       if (to && to !== route) return { kind: "redirect", location: to };
     } else {
-      return { kind: "page", data: transform(live.html), source: "wordpress" };
+      return { kind: "page", html: toDocument(live.html, { gaIds: GA_IDS }), source: "wordpress" };
     }
   }
   const saved = await readSnapshot(route);
-  if (saved) return { kind: "page", data: transform(saved), source: "snapshot" };
+  if (saved) return { kind: "page", html: toDocument(saved, { gaIds: GA_IDS }), source: "snapshot" };
   return { kind: "not-found" };
-});
+}
 
 /** The site's own 404 page design. */
-export const getNotFoundPage = cache(async (): Promise<PageData | null> => {
+export async function getNotFoundPage(): Promise<string | null> {
   const live = await fetchFromWordPress("/__jl-not-found__/");
-  if (live && live.status === 404) return transform(live.html);
+  if (live && live.status === 404) return toDocument(live.html, { gaIds: GA_IDS });
   const saved = await readSnapshot("/__404/");
-  return saved ? transform(saved) : null;
-});
+  return saved ? toDocument(saved, { gaIds: GA_IDS }) : null;
+}
