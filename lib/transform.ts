@@ -192,16 +192,6 @@ export function toDocument(rawHtml: string, opts: { gaIds: string[] }): string {
   });
 
   optimizeImages($);
-  // Font and icon stylesheets load from our own address, so phones don't open
-  // two more connections before the page can be drawn.
-  $('link[rel="stylesheet"][href]').each((_, node) => {
-    const el = $(node);
-    const href = el.attr("href") || "";
-    const local = href
-      .replace(/^https:\/\/fonts\.googleapis\.com\/(css2?)\?/, "/jl-assets/google-fonts/$1.css?")
-      .replace(/^https:\/\/cdnjs\.cloudflare\.com\/(.+\.css)$/, "/jl-assets/cdnjs/$1");
-    if (local !== href) el.attr("href", local);
-  });
   $("head").append(gaSnippet(opts.gaIds));
   $("head").append(`<style id="jl-page-transition">${PAGE_TRANSITION_CSS}</style>`);
   $("head").append(`<script type="speculationrules">${SPECULATION_RULES}</script>`);
