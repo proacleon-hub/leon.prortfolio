@@ -42,11 +42,18 @@ const protocolRelativePattern = new RegExp(
   "g",
 );
 
+// Same, URL-encoded (https%3A%2F%2Fcms.junayedleon.tech), e.g. in oEmbed links.
+const encodedHostPattern = new RegExp(
+  "(" + WP_HOSTS.map((h) => encodeURIComponent(h).replace(/[.*+?^${}()|[\]\\]/g, "\\$&")).join("|") + ")",
+  "gi",
+);
+
 /** Point every WordPress URL at the public site address. */
 export function toPublicUrls(s: string): string {
   return s
     .replace(protocolRelativePattern, SITE_URL.replace(/^https?:/, ""))
-    .replace(hostPattern, SITE_URL).replace(escapedHostPattern, SITE_URL.replace(/\//g, "\\/"));
+    .replace(hostPattern, SITE_URL).replace(escapedHostPattern, SITE_URL.replace(/\//g, "\\/"))
+    .replace(encodedHostPattern, encodeURIComponent(SITE_URL));
 }
 
 /** Make links relative so the site also works on preview domains. */
