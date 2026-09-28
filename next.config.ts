@@ -15,15 +15,16 @@ const config: NextConfig = {
   },
   async rewrites() {
     return {
-      beforeFiles: [],
-      afterFiles: [],
-      // Images, fonts and theme files stay on WordPress; anything not served
-      // by Next.js itself is fetched from there, so old media URLs keep working.
-      fallback: [
+      // Images, fonts and theme files stay on WordPress and are fetched from
+      // there, so old media URLs keep working. These must run before the
+      // catch-all page route, which would otherwise answer them with a 404.
+      beforeFiles: [
         { source: "/wp-content/:path*", destination: `${WP_ORIGIN}/wp-content/:path*` },
         { source: "/wp-includes/:path*", destination: `${WP_ORIGIN}/wp-includes/:path*` },
         { source: "/wp-json/:path*", destination: `${WP_ORIGIN}/wp-json/:path*` },
       ],
+      afterFiles: [],
+      fallback: [],
     };
   },
 };

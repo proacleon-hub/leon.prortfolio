@@ -62,9 +62,17 @@ const escapedHostPattern = new RegExp(
   "g",
 );
 
+// Protocol-relative WordPress URLs (//cms.junayedleon.tech/...), e.g. in Yoast's sitemap XSL link.
+const protocolRelativePattern = new RegExp(
+  "(?<![:\\w])(" + WP_HOSTS.map((h) => h.replace(/^https?:/, "").replace(/[.*+?^${}()|[\]\\/]/g, "\\$&")).join("|") + ")(?=[/\"'])",
+  "g",
+);
+
 /** Point every WordPress URL at the public site address. */
 export function toPublicUrls(s: string): string {
-  return s.replace(hostPattern, SITE_URL).replace(escapedHostPattern, SITE_URL.replace(/\//g, "\\/"));
+  return s
+    .replace(protocolRelativePattern, SITE_URL.replace(/^https?:/, ""))
+    .replace(hostPattern, SITE_URL).replace(escapedHostPattern, SITE_URL.replace(/\//g, "\\/"));
 }
 
 /** Make links relative so the site also works on preview domains. */
