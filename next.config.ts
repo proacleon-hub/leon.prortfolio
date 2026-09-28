@@ -6,6 +6,21 @@ const config: NextConfig = {
   // WordPress URLs end with a slash (/services/, /insights/post-name/).
   trailingSlash: true,
   poweredByHeader: false,
+  images: {
+    // Photos from WordPress are resized and converted to AVIF/WebP (see lib/transform.ts).
+    formats: ["image/avif", "image/webp"],
+    deviceSizes: [640, 828, 1080, 1200, 1920, 2048],
+    qualities: [85],
+    minimumCacheTTL: 60 * 60 * 24 * 30,
+    remotePatterns: [
+      { protocol: "https", hostname: "junayedleon.tech", pathname: "/wp-content/uploads/**" },
+      { protocol: "https", hostname: "cms.junayedleon.tech", pathname: "/wp-content/uploads/**" },
+      ...(process.env.WP_ORIGIN?.startsWith("http://localhost")
+        ? [{ protocol: "http" as const, hostname: "localhost", port: "8082", pathname: "/wp-content/uploads/**" }]
+        : []),
+    ],
+    dangerouslyAllowLocalIP: process.env.WP_ORIGIN?.startsWith("http://localhost") ?? false,
+  },
   async redirects() {
     return [
       // The WordPress dashboard keeps working on the CMS address.

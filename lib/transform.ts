@@ -1,6 +1,6 @@
 import * as cheerio from "cheerio";
 import type { Element } from "domhandler";
-import { SITE_URL, WP_HOSTS } from "./site";
+import { IMAGE_QUALITY, IMAGE_WIDTHS, SITE_URL, WP_HOSTS, WP_ORIGIN } from "./site";
 
 // WordPress scripts that the Next.js site doesn't need (jQuery, Elementor
 // runtime, emoji, Astra, Google tags that the layout loads once).
@@ -78,6 +78,46 @@ function gaSnippet(ids: string[]): string {
   );
 }
 
+function optimizedUrl(uploadPath: string, width: number): string {
+  const w = IMAGE_WIDTHS.find((x) => x >= width) ?? IMAGE_WIDTHS[IMAGE_WIDTHS.length - 1];
+  return `/_next/image/?url=${encodeURIComponent(WP_ORIGIN + uploadPath)}&w=${w}&q=${IMAGE_QUALITY}`;
+}
+
+/**
+ * Serve uploaded photos through Next.js image optimisation: same picture,
+ * same size on screen, but sent as AVIF/WebP at the width the device needs.
+ * (e.g. the 742 KB homepage portrait becomes well under 100 KB.)
+ */
+function optimizeImages($: cheerio.CheerioAPI) {
+  const upload = /^\/wp-content\/uploads\/[^?#]+\.(png|jpe?g|webp)$/i;
+  let first = true;
+  $("img[src]").each((_, node) => {
+    const el = $(node);
+    const src = el.attr("src") || "";
+    if (!upload.test(src)) return;
+    const existing = el.attr("srcset");
+    if (existing) {
+      // WordPress already lists sizes: keep its widths, optimise each file.
+      const parts = existing.split(",").map((part) => {
+        const [url, desc] = part.trim().split(/\s+/);
+        const w = /^(\d+)w$/.exec(desc || "");
+        return upload.test(url) && w ? `${optimizedUrl(url, Number(w[1]))} ${desc}` : part.trim();
+      });
+      el.attr("srcset", parts.join(", "));
+    } else {
+      el.attr("srcset", IMAGE_WIDTHS.map((w) => `${optimizedUrl(src, w)} ${w}w`).join(", "));
+      if (!el.attr("sizes")) el.attr("sizes", "100vw");
+    }
+    el.attr("src", optimizedUrl(src, 1080));
+    // The main photo at the top of the page loads first.
+    if (first && el.closest(".hero, .hero-img-card, .elementor-widget-image").length) {
+      el.attr("fetchpriority", "high");
+      el.removeAttr("loading");
+      first = false;
+    }
+  });
+}
+
 /**
  * Take a page exactly as WordPress rendered it and return the document the
  * public site serves: same markup, styles (in the same order) and the site's
@@ -120,6 +160,7 @@ export function toDocument(rawHtml: string, opts: { gaIds: string[] }): string {
     if (code.includes(SITE_URL)) el.text(toRelative(code));
   });
 
+  optimizeImages($);
   $("head").append(gaSnippet(opts.gaIds));
   return "<!DOCTYPE html>\n" + $.html().replace(/^<!DOCTYPE html>\s*/i, "");
 }

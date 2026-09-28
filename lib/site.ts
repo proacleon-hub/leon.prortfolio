@@ -26,3 +26,8 @@ export const KNOWN_ROUTES = [
   "/sitemap/",
   "/privacy-policy/",
 ];
+
+// Widths the image optimiser may produce (must match next.config.ts images.deviceSizes).
+export const IMAGE_WIDTHS = [640, 828, 1080, 1200, 1920, 2048];
+// High enough that photos look the same as the originals.
+export const IMAGE_QUALITY = 85;

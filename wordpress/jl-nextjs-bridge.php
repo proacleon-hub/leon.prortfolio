@@ -2,11 +2,26 @@
 /**
  * Plugin Name: JL Next.js bridge
  * Description: Tells the Next.js site (Vercel) to refresh the moment anything is saved in WordPress, and keeps the CMS address out of Google once WordPress moves to cms.junayedleon.tech. Safe to delete: the Next.js site then refreshes every 5 minutes on its own.
- * Version: 1.0.0
+ * Version: 1.1.0
  */
 
 if (!defined('ABSPATH')) {
     exit;
+}
+
+/**
+ * After the move, WordPress is also reached at cms.junayedleon.tech (that is
+ * where the Next.js site reads it from, and where you log in). On that address
+ * WordPress uses it as its own address instead of redirecting to the public
+ * domain. Requests on junayedleon.tech are untouched, so nothing changes until
+ * the domain is switched, and switching back needs no WordPress change.
+ */
+if (isset($_SERVER['HTTP_HOST']) && strtolower($_SERVER['HTTP_HOST']) === 'cms.junayedleon.tech') {
+    $jl_bridge_cms_url = function () {
+        return 'https://cms.junayedleon.tech';
+    };
+    add_filter('option_home', $jl_bridge_cms_url, 99);
+    add_filter('option_siteurl', $jl_bridge_cms_url, 99);
 }
 
 /** Public Next.js addresses to notify. The live domain is only added once WordPress has moved off it. */
