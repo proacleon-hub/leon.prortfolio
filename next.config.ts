@@ -33,20 +33,20 @@ const config: NextConfig = {
   },
   async rewrites() {
     return {
-      // Images, fonts and theme files stay on WordPress and are fetched from
-      // there, so old media URLs keep working. These must run before the
-      // catch-all page route, which would otherwise answer them with a 404.
       beforeFiles: [
+        // Phones get their own lighter version of each page (style files built
+        // in, see lib/inline-css.ts). Computers and tablets are not affected.
+        // This runs before files because Vercel counts prerendered pages as files.
+        { source: "/", has: [PHONE_UA], destination: "/jl-phone/" },
+        { source: "/:path((?!_next/|api/|jl-phone/|wp-|.*\\.[a-zA-Z0-9]+$).*)", has: [PHONE_UA], destination: "/jl-phone/:path" },
+        // Images, fonts and theme files stay on WordPress and are fetched from
+        // there, so old media URLs keep working. These must run before the
+        // catch-all page route, which would otherwise answer them with a 404.
         { source: "/wp-content/:path*", destination: `${WP_ORIGIN}/wp-content/:path*` },
         { source: "/wp-includes/:path*", destination: `${WP_ORIGIN}/wp-includes/:path*` },
         { source: "/wp-json/:path*", destination: `${WP_ORIGIN}/wp-json/:path*` },
       ],
-      // Phones get their own lighter version of each page (style files built
-      // in, see lib/inline-css.ts). Computers and tablets are not affected.
-      afterFiles: [
-        { source: "/", has: [PHONE_UA], destination: "/jl-phone/" },
-        { source: "/:path((?!_next/|api/|jl-phone/|wp-|.*\\.[a-zA-Z0-9]+$).*)", has: [PHONE_UA], destination: "/jl-phone/:path" },
-      ],
+      afterFiles: [],
       fallback: [],
     };
   },
