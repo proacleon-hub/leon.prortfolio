@@ -33,8 +33,10 @@ const config: NextConfig = {
       // Images, fonts and theme files stay on WordPress and are fetched from
       // there, so old media URLs keep working. These must run before the
       // catch-all page route, which would otherwise answer them with a 404.
+      // Stylesheets (.css) are left to app/wp-content, which keeps them in
+      // Vercel's cache so pages draw sooner.
       beforeFiles: [
-        { source: "/wp-content/:path*", destination: `${WP_ORIGIN}/wp-content/:path*` },
+        { source: "/wp-content/:path((?!.*\\.css$).*)", destination: `${WP_ORIGIN}/wp-content/:path` },
         { source: "/wp-includes/:path*", destination: `${WP_ORIGIN}/wp-includes/:path*` },
         { source: "/wp-json/:path*", destination: `${WP_ORIGIN}/wp-json/:path*` },
       ],
