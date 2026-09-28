@@ -16,8 +16,12 @@ fonts, colours and animations match the WordPress site exactly.
 - `snapshot/` holds a saved copy of every page. If WordPress can't be reached,
   the site serves the saved copy instead of going down.
 - Yoast titles, descriptions, Open Graph, canonical URLs and JSON-LD schema are
-  carried over per page. Yoast XML sitemaps and feeds are proxied
-  (`proxy.ts`, `app/api/wp-proxy`), `robots.txt` comes from `app/robots.ts`.
+  carried over per page. `robots.txt`, `llms.txt`, the XML sitemaps and feeds
+  are passed through exactly as Yoast/WordPress make them.
+- Instant refresh: the WordPress must-use plugin `jl-nextjs-bridge.php`
+  (in `wordpress/`) pings `/api/revalidate/` on every save. That endpoint asks
+  WordPress (`/wp-json/jl/v1/last-change`) whether anything really changed in
+  the last 5 minutes before refreshing, so it needs no password.
 - Images and theme files under `/wp-content/` are served from WordPress, so
   every existing media URL keeps working.
 - WordPress's jQuery/Elementor/emoji scripts are dropped; the site's own
@@ -54,3 +58,13 @@ WP_SOURCE=snapshot npm run build   # offline build from the saved copy
 6. Re-submit `https://junayedleon.tech/sitemap_index.xml` in Search Console.
 
 Steps 2–5 change the live site and need the owner's go-ahead.
+
+## Going back to the old site
+
+WordPress is never removed, so the old site can come back at any time:
+
+1. Put the domain's DNS records back to the values saved before launch.
+2. Set WordPress Settings → General back to `https://junayedleon.tech`.
+
+A full WordPress backup (database, uploads, custom code) was taken on
+2026-09-28 before any launch step.
