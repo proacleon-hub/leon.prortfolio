@@ -85,6 +85,30 @@ function gaSnippet(ids: string[]): string {
   );
 }
 
+/**
+ * Makes moving between pages feel instant: the browser fetches a page as soon
+ * as the visitor hovers or presses a link to it, and fades from one page to
+ * the next instead of flashing white. Browsers without support ignore both.
+ */
+const SPECULATION_RULES = JSON.stringify({
+  prefetch: [
+    {
+      where: {
+        and: [
+          { href_matches: "/*" },
+          { not: { href_matches: ["/wp-admin/*", "/wp-login.php", "/api/*", "/wp-content/*", "/wp-json/*", "/*.xml", "/*.txt", "/feed/*"] } },
+          { not: { selector_matches: "[target=_blank], [download]" } },
+        ],
+      },
+      eagerness: "moderate",
+    },
+  ],
+});
+
+const PAGE_TRANSITION_CSS =
+  "@view-transition{navigation:auto}" +
+  "@media (prefers-reduced-motion:reduce){@view-transition{navigation:none}}";
+
 function optimizedUrl(uploadPath: string, width: number): string {
   const w = IMAGE_WIDTHS.find((x) => x >= width) ?? IMAGE_WIDTHS[IMAGE_WIDTHS.length - 1];
   return `/_next/image/?url=${encodeURIComponent(WP_ORIGIN + uploadPath)}&w=${w}&q=${IMAGE_QUALITY}`;
@@ -169,5 +193,7 @@ export function toDocument(rawHtml: string, opts: { gaIds: string[] }): string {
 
   optimizeImages($);
   $("head").append(gaSnippet(opts.gaIds));
+  $("head").append(`<style id="jl-page-transition">${PAGE_TRANSITION_CSS}</style>`);
+  $("head").append(`<script type="speculationrules">${SPECULATION_RULES}</script>`);
   return "<!DOCTYPE html>\n" + $.html().replace(/^<!DOCTYPE html>\s*/i, "");
 }
