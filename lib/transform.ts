@@ -76,12 +76,23 @@ const DROP_HEAD = [
 // JSON-LD keep absolute public URLs, as search engines expect.
 const URL_ATTRS = ["href", "src", "srcset", "action", "poster", "data-src", "data-srcset", "style"];
 
+/**
+ * Google Analytics, loaded once the visitor scrolls, taps, types or moves the
+ * mouse (or 8 seconds after the page has loaded), so its two large scripts
+ * don't compete with drawing the page. Page views are queued from the start
+ * and sent as soon as it loads.
+ */
 function gaSnippet(ids: string[]): string {
   const cfg = ids.map((id) => `gtag("config",${JSON.stringify(id)});`).join("");
+  const src = JSON.stringify(`https://www.googletagmanager.com/gtag/js?id=${ids[0]}`);
   return (
-    `<script async src="https://www.googletagmanager.com/gtag/js?id=${ids[0]}"></script>` +
     `<script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}` +
-    `gtag("set","linker",{"domains":["junayedleon.tech"]});gtag("js",new Date());${cfg}</script>`
+    `gtag("set","linker",{"domains":["junayedleon.tech"]});gtag("js",new Date());${cfg}` +
+    `(function(){var done=0,ev=["scroll","pointerdown","keydown","touchstart","mousemove"];` +
+    `function go(){if(done)return;done=1;ev.forEach(function(e){removeEventListener(e,go,true)});` +
+    `var s=document.createElement("script");s.async=true;s.src=${src};document.head.appendChild(s)}` +
+    `ev.forEach(function(e){addEventListener(e,go,{capture:true,passive:true})});` +
+    `addEventListener("load",function(){setTimeout(go,8000)})})();</script>`
   );
 }
 
