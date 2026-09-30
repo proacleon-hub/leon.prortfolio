@@ -120,6 +120,26 @@ const PAGE_TRANSITION_CSS =
   "@view-transition{navigation:auto}" +
   "@media (prefers-reduced-motion:reduce){@view-transition{navigation:none}}";
 
+/**
+ * Smooth scrolling through the pinned "services folder" on the homepage.
+ * The site's script pins that section by switching it between "absolute" and
+ * "fixed" on every scroll event. Phones scroll ahead of scripts, so the section
+ * visibly jumped at the start and end of the pin, and it changed height (and
+ * moved every card) each time the phone's address bar slid in or out. Here the
+ * browser pins it itself (sticky, at the same spots the script used), and its
+ * height follows the screen with the address bar shown, so it no longer
+ * changes mid-scroll. The animation, sizes and look are unchanged.
+ * "clip" hides sideways overflow exactly like "hidden" did, but unlike
+ * "hidden" on <body> it lets sticky elements work.
+ */
+const SMOOTH_SCROLL_CSS =
+  "html:root,html:root>body{overflow-x:clip!important}" +
+  ".services-folder-scroll.is-enhanced .services-folder-sticky,.services-folder-scroll.is-mobile .services-folder-sticky" +
+  "{position:sticky!important;left:auto!important;width:100%!important}" +
+  ".services-folder-scroll.is-enhanced .services-folder-sticky{top:82px!important}" +
+  ".services-folder-scroll.is-mobile .services-folder-sticky{top:72px!important;height:clamp(520px,calc(100svh - 76px),820px)}" +
+  "@media (max-width:600px){.services-folder-scroll.is-mobile .services-folder-sticky{top:62px!important}}";
+
 function optimizedUrl(uploadPath: string, width: number): string {
   const w = IMAGE_WIDTHS.find((x) => x >= width) ?? IMAGE_WIDTHS[IMAGE_WIDTHS.length - 1];
   return `/_next/image/?url=${encodeURIComponent(WP_ORIGIN + uploadPath)}&w=${w}&q=${IMAGE_QUALITY}`;
@@ -205,6 +225,7 @@ export function toDocument(rawHtml: string, opts: { gaIds: string[] }): string {
   optimizeImages($);
   $("head").append(gaSnippet(opts.gaIds));
   $("head").append(`<style id="jl-page-transition">${PAGE_TRANSITION_CSS}</style>`);
+  $("head").append(`<style id="jl-smooth-scroll">${SMOOTH_SCROLL_CSS}</style>`);
   $("head").append(`<script type="speculationrules">${SPECULATION_RULES}</script>`);
   return "<!DOCTYPE html>\n" + $.html().replace(/^<!DOCTYPE html>\s*/i, "");
 }
