@@ -140,6 +140,24 @@ const SMOOTH_SCROLL_CSS =
   ".services-folder-scroll.is-mobile .services-folder-sticky{top:72px!important;height:clamp(520px,calc(100svh - 76px),820px)}" +
   "@media (max-width:600px){.services-folder-scroll.is-mobile .services-folder-sticky{top:62px!important}}";
 
+/**
+ * Smooth scrolling for mouse wheels and trackpads: instead of jumping a big
+ * step at each turn of the wheel, the page glides (Lenis, served from this
+ * site). Only computers load it; touch screens already scroll smoothly, and
+ * visitors who ask their system for less motion keep normal scrolling.
+ */
+const SMOOTH_WHEEL_SRC = "/jl-smooth/lenis-1.3.26.min.js";
+const SMOOTH_WHEEL_CSS =
+  "html.lenis,html.lenis body{height:auto}" +
+  "html.lenis{scroll-behavior:auto!important}" +
+  ".lenis:not(.lenis-autoToggle).lenis-stopped{overflow:clip}" +
+  ".lenis.lenis-smooth iframe{pointer-events:none}";
+const SMOOTH_WHEEL_JS =
+  `(function(){if(!window.matchMedia||!matchMedia("(pointer:fine)").matches||matchMedia("(prefers-reduced-motion:reduce)").matches)return;` +
+  `var s=document.createElement("script");s.src=${JSON.stringify(SMOOTH_WHEEL_SRC)};s.async=true;` +
+  `s.onload=function(){if(window.Lenis)window.jlLenis=new Lenis({autoRaf:true,anchors:true,allowNestedScroll:true})};` +
+  `document.head.appendChild(s)})();`;
+
 function optimizedUrl(uploadPath: string, width: number): string {
   const w = IMAGE_WIDTHS.find((x) => x >= width) ?? IMAGE_WIDTHS[IMAGE_WIDTHS.length - 1];
   return `/_next/image/?url=${encodeURIComponent(WP_ORIGIN + uploadPath)}&w=${w}&q=${IMAGE_QUALITY}`;
@@ -186,7 +204,7 @@ function optimizeImages($: cheerio.CheerioAPI) {
  * own scripts, with WordPress-only extras (jQuery, Elementor runtime, emoji,
  * duplicate SEO tags) removed and URLs pointing at the public site.
  */
-export function toDocument(rawHtml: string, opts: { gaIds: string[] }): string {
+export function toDocument(rawHtml: string, opts: { gaIds: string[]; smoothWheel?: boolean }): string {
   const $ = cheerio.load(toPublicUrls(rawHtml));
 
   $("script").each((_, node) => {
@@ -226,6 +244,10 @@ export function toDocument(rawHtml: string, opts: { gaIds: string[] }): string {
   $("head").append(gaSnippet(opts.gaIds));
   $("head").append(`<style id="jl-page-transition">${PAGE_TRANSITION_CSS}</style>`);
   $("head").append(`<style id="jl-smooth-scroll">${SMOOTH_SCROLL_CSS}</style>`);
+  if (opts.smoothWheel) {
+    $("head").append(`<style id="jl-smooth-wheel">${SMOOTH_WHEEL_CSS}</style>`);
+    $("head").append(`<script id="jl-smooth-wheel-js">${SMOOTH_WHEEL_JS}</script>`);
+  }
   $("head").append(`<script type="speculationrules">${SPECULATION_RULES}</script>`);
   return "<!DOCTYPE html>\n" + $.html().replace(/^<!DOCTYPE html>\s*/i, "");
 }

@@ -31,6 +31,12 @@ const config: NextConfig = {
       { source: "/wp-login.php", destination: `${WP_ORIGIN}/wp-login.php`, permanent: false },
     ];
   },
+  async headers() {
+    return [
+      // The smooth-scrolling file has its version in its name, so browsers can keep it.
+      { source: "/jl-smooth/:file*", headers: [{ key: "cache-control", value: "public, max-age=31536000, immutable" }] },
+    ];
+  },
   async rewrites() {
     return {
       beforeFiles: [

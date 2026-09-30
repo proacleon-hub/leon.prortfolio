@@ -10,7 +10,7 @@ import { toDocument, toPublicUrls } from "./transform";
  * as before.
  */
 async function render(html: string, phone: boolean): Promise<string> {
-  const doc = toDocument(html, { gaIds: GA_IDS });
+  const doc = toDocument(html, { gaIds: GA_IDS, smoothWheel: !phone });
   return phone ? inlineStylesheets(doc) : doc;
 }
 
